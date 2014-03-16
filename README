@@ -1,7 +1,0 @@
-Porting of Matlab Based Code for the State Estimation of a Quadrotor into C++/ROS framework.
-
-State Vector for both Kalman Filter implementations is 14 Dimensional: 
-[position, velocity, orientation, imu bias, roll/pitch bias]
-roll/pitch bias maintained at 0 in this exercise.
-
-*Discription/Info Will Go here*
