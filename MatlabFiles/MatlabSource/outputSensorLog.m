@@ -84,12 +84,37 @@ fid = fopen('sensorIMUangVel.txt', 'w');
 fprintf(fid, '%.15f %.15f %.15f\n', sensorIMUangVel);
 fclose(fid);
 
+%Write Process Input, U, (Accelerometer) to text file
+processInputAcc = processInput(1:3,:);
+fid = fopen('processInputAcc.txt', 'w');
+fprintf(fid, '%.15f %.15f %.15f\n', processInputAcc);
+fclose(fid);
+
+%Write Process Input, U, (Gyroscope) to text file
+processInputOmega = processInput(4:6,:);
+fid = fopen('processInputOmega.txt', 'w');
+fprintf(fid, '%.15f %.15f %.15f\n', processInputOmega);
+fclose(fid);
+
 
 %% Write nPointPose algorithm measurement to text file.
 
 %Position and Orientation
-fid = fopen('visionRobot.txt', 'w');
-fprintf(fid, '%.15f %.15f %.15f\n', visionRobot);
+visionRobotPosData = visionRobot(1:3,:);
+fid = fopen('visionRobotPos.txt', 'w');
+fprintf(fid, '%.15f %.15f %.15f\n', visionRobotPosData);
+fclose(fid);
+
+%Position For Use with CPP Implementation
+poseNPPPosData = poseNPP(1:3,:);
+fid = fopen('poseNPPPos.txt', 'w');
+fprintf(fid, '%.15f %.15f %.15f\n', poseNPPPosData);
+fclose(fid);
+
+%Position For Use with CPP Implementation
+poseNPPOrientData = poseNPP(4:6,:);
+fid = fopen('poseNPPOrient.txt', 'w');
+fprintf(fid, '%.15f %.15f %.15f\n', poseNPPOrientData);
 fclose(fid);
 
 
