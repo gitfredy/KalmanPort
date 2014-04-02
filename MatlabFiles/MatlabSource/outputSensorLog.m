@@ -69,6 +69,10 @@ fid = fopen('bodyAngVel.txt', 'w');
 fprintf(fid, '%.15f %.15f %.15f\n', bodyAngVel);
 fclose(fid);
 
+fid = fopen('quadTimeLog.txt', 'w'); 
+fprintf(fid, '%.15f\n', quadTimeLog);
+fclose(fid);
+
 
 %% Write the data of sensorLog into text files.
 
@@ -105,6 +109,7 @@ fid = fopen('visionRobotPos.txt', 'w');
 fprintf(fid, '%.15f %.15f %.15f\n', visionRobotPosData);
 fclose(fid);
 
+%Note: poseNPP will contain [0...0] for vector where no data is available to make pose estimate (measurement update) 
 %Position For Use with CPP Implementation
 poseNPPPosData = poseNPP(1:3,:);
 fid = fopen('poseNPPPos.txt', 'w');

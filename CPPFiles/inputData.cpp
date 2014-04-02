@@ -33,6 +33,7 @@ dataVec parseStringForData(string&);
 
 std::vector<dataVec> sensorLogAccImu;
 std::vector<dataVec> sensorLogOmegaImu; 
+std::vector<double> quadTimeLog;
 std::vector<dataVec> visionRobotPos; 
 std::vector<dataVec> visionRobotOrient; 
 std::vector<dataVec> viconEuler; 
@@ -90,6 +91,26 @@ void inputData(){
  }
  */
  
+  //-----Read Quad Sensor Times------
+ string inQuadTime;
+ double inQuadTimeNum;
+ ifstream inFileQuadTime ("../Data/quadTimeLog.txt");
+ if(inFileTime.is_open()){
+  while(getline(inFileQuadTime, inQuadTime)){
+   inQuadTimeNum = stod(inQuadTime);
+   quadTimeLog.push_back(inQuadTimeNum);
+  }
+  inFileTime.close();
+ }else {
+ cout << "Error Opening File" << endl;
+ }
+ /*
+ for (list<double>::iterator vtIter = viconTime.begin(); vtIter != viconTime.end(); ++vtIter){
+  cout << setprecision(17) << *vtIter << endl;
+ }
+ */
+ 
+ 
  //-----Read poseNPPPos (Measurement Update, Position Output From nPointPose Algorithm)-----
  //vector<dataVec> visionRobotPos; 
  string inVisionRobotPos;
@@ -135,6 +156,7 @@ void inputData(){
   cout << endl;
  }
 */
+
 
 
  //-----Read Vicon Euler Angles-----
