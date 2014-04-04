@@ -4,7 +4,7 @@
 ####State Vector for both Kalman Filter implementations is 14 Dimensional: 
 ####[position, velocity, orientation, imu accelerometer bias, roll/pitch bias]
 
-####Implementation uses Boost 1.49 and C++11
+####Implementation uses Boost 1.49 and C++11/STL
 
 
 *Discription/Info Will Go here, ongoing work*
