@@ -34,24 +34,20 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-//using namespace boost::numeric::ublas;
 using namespace boost::numeric;
-
-//ublas::vector<double> gEqn(ublas::vector<double>, ublas::vector<double>, ublas::vector<double>);
-
-//void fmUKF (ublas::vector<double> &stateVector, ublas::vector<double> &normP, ublas::vector<double> x, ublas::vector<double> P, ublas::vector<double> deltaT, ublas::vector<double> z, ublas::vector<double> errVn, ublas::vector<double> Vn)
 
 ublas::vector<double> gEqn(ublas::vector<double>, ublas::vector<double>, ublas::vector<double>, double);
 ublas::matrix<double> RPYtoRotMat(double, double, double); //Roll, Pitch, Yaw
 double atanFM(double, double);
+ublas::matrix<double> calculateCovEquation(ublas::matrix<double>, ublas::matrix<double>);
 
 ublas::vector<double> sigmaPoint(14);
 extern ublas::matrix<double> Q;
 extern ublas::matrix<double> R;
 
 
-//void fmUKF (ublas::vector<double>& stateVector, ublas::vector<double>& normP, ublas::vector<double> x, ublas::matrix<double> P, double deltaT, ublas::vector<double> z, ublas::vector<double> errVn, ublas::vector<double> Vn)
-void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::matrix<double> P, double deltaT, ublas::vector<double> z, ublas::vector<double> errVn, ublas::vector<double> Vn)
+
+void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::matrix<double>& P, double deltaT, ublas::vector<double> z, ublas::vector<double> errVn, ublas::vector<double> Vn)
 
 {
 	cout << "fmUKF" << endl;
@@ -74,22 +70,6 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		//Add the previous mean Xest to complete Sigma Points
 		for(unsigned i = 0; i < W_i.size2(); ++i){ //bsxfun(@plus)
 			column(W_i, i) = column(W_i, i) + x;
-			/*
-			W_i(0,i) = W_i(0,i) + x(0);
-			W_i(1,i) = W_i(1,i) + x(1);
-			W_i(2,i) = W_i(2,i) + x(2);
-			W_i(3,i) = W_i(3,i) + x(3);
-			W_i(4,i) = W_i(4,i) + x(4);
-			W_i(5,i) = W_i(5,i) + x(5);
-			W_i(6,i) = W_i(6,i) + x(6);
-			W_i(7,i) = W_i(7,i) + x(7);
-			W_i(8,i) = W_i(8,i) + x(8);
-			W_i(9,i) = W_i(9,i) + x(9);
-			W_i(10,i) = W_i(10,i) + x(10);
-			W_i(11,i) = W_i(11,i) + x(11);
-			W_i(12,i) = W_i(12,i) + x(12);
-			W_i(13,i) = W_i(13,i) + x(13);
-			*/
 		}
 		//cout << W_i << endl;
 		
@@ -120,9 +100,22 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 	}
 	//cout << W_i << endl;
 
-    
-    
-      
+	ublas::matrix<double> Pbar_k = calculateCovEquation(W_i, W_i);
+	
+	//No Measurement Update Available
+	if (z(0)+z(1)+z(2)+z(3)+z(4)+z(5) == 0){
+		P = Pbar_k; 
+		dataVec tempVec;
+		for(unsigned i = 0; i < aprioriStateEst.size(); ++i){
+		tempVec.push_back(aprioriStateEst(i));
+		}
+		stateVector.push_back(tempVec);
+		cout << "No Measurement Update Available to Correct Apriori Estimate" << endl;
+		return;
+	}
+	
+	//Continue with Predicted Observation Z
+          
 	
 }
 
@@ -166,14 +159,9 @@ ublas::vector<double> gEqn(ublas::vector<double> sigmaPoint, ublas::vector<doubl
 	
 	return propState;
 	
-	/*
-	ublas::vector<double> ret(3);
-	ret(0) = 1; ret(1) = 0; ret(2) = 0;
-	ret.push_back(1); ret.push_back(0);
-	cout << ret(0) << endl;
-	return ret;
-	*/
+	
 }
+
 //Return Rotation Matrix along ZXY
 ublas::matrix<double> RPYtoRotMat(double phi, double theta, double psi){
 	ublas::matrix<double> rotMat(3,3);
@@ -191,10 +179,29 @@ ublas::matrix<double> RPYtoRotMat(double phi, double theta, double psi){
 	
 	return rotMat;
 }
-//atan used with Matlab Symbolic Explressions
+
+//atan used with Matlab Symbolic Explressions, replicated here for comparison.
 double atanFM(double y, double x){
 	return  2*atan(y / ( sqrt((x*x)+(y*y)) + x ));	
 }
+
+//Covariance Matrix calculated as weighted/averaged outer product of input points/vectors.
+ublas::matrix<double> calculateCovEquation(ublas::matrix<double> A, ublas::matrix<double> B){
+	
+	ublas::matrix<double> covMat(14, 14);
+	for(unsigned i = 0; i < covMat.size1(); ++i){
+		for(unsigned j = 0; j < covMat.size2(); ++j){ 
+			covMat(i, j) = 0.0;
+		}
+	}
+	
+	for(unsigned i = 0; i < A.size2(); ++i){
+		covMat += outer_prod(column(A, i), column(B, i));
+	}
+	covMat /= 28;
+	return covMat;
+}
+
 
 /*
 ublas::vector<double> gEqn(ublas::vector<double> sigmaPoint, ublas::vector<double> errVn, ublas::vector<double> Vn){ 
