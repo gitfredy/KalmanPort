@@ -10,25 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <iomanip>
-//#include <sstream>
-
-//#include <algorithm>
-//#include <vector>
-//#include <map>
-//#include <list>
 
 #include <math.h>
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
-//#include <boost/math/complex/acos.hpp>
-//#include <boost/math/complex/asin.hpp>
-//#include <boost/math/complex/atan.hpp>
+
 
 #include "cholesky.hpp"
-
+#include "InvertMatrix.hpp"
 
 using std::cout;
 using std::cin;
@@ -61,12 +52,10 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 	ublas::matrix<double> X_i(14,28);
 	
 	if (decompFail == 0) {
-		//cout << L << std::endl;
 		//Capture the Covariance
 		subrange(W_i, 0, 14, 0, 14) = sqrt(14.0) * L;
 		subrange(W_i, 0, 14, 14, 28) = -sqrt(14.0) * L;
-		//cout << W_i << endl;
-		
+				
 		//Add the previous mean Xest to complete Sigma Points
 		for(unsigned i = 0; i < W_i.size2(); ++i){ //bsxfun(@plus)
 			column(W_i, i) = column(W_i, i) + x;
@@ -83,12 +72,6 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		propogatedSigma = gEqn(sigmaPoint, errVn, Vn, deltaT);
 	    column(X_i, i) = propogatedSigma;
 	    aprioriStateEst += propogatedSigma;
-		/*
-		sigmaPoint(0) = W_i(0,i); sigmaPoint(1) = W_i(1,i); sigmaPoint(2) = W_i(2,i); sigmaPoint(3) = W_i(3,i);
-		sigmaPoint(4) = W_i(4,i); sigmaPoint(5) = W_i(5,i); sigmaPoint(6) = W_i(6,i); sigmaPoint(7) = W_i(7,i);
-		sigmaPoint(8) = W_i(8,i); sigmaPoint(9) = W_i(9,i); sigmaPoint(10) = W_i(10,i); sigmaPoint(11) = W_i(11,i);
-		sigmaPoint(12) = W_i(12,i); sigmaPoint(13) = W_i(13,i);
-		*/
 	}
 	
 	aprioriStateEst /= X_i.size2(); //Mean
@@ -114,8 +97,57 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		return;
 	}
 	
-	//Continue with Predicted Observation Z
-          
+	//Predicted Observation Zbar_k, Observation subset Z_i
+	ublas::matrix<double> Z_i(6, 28); //Pos, Orient
+	ublas::vector<double> Zbar_k(6);
+	Zbar_k(0) = 0; Zbar_k(1) = 0; Zbar_k(2) = 0; Zbar_k(3) = 0; Zbar_k(4) = 0; Zbar_k(5) = 0;
+	for(unsigned i = 0; i < X_i.size2(); ++i){
+		Z_i(0, i) = X_i(0, i); Z_i(1, i) = X_i(1, i); Z_i(2, i) = X_i(2, i);
+		Z_i(3, i) = X_i(6, i); Z_i(4, i) = X_i(7, i); Z_i(5, i) = X_i(8, i);
+		Zbar_k += column(Z_i, i);
+	}
+	//Note: These will vary from matlab since this involves propogated sigma points, random walk model.
+	Zbar_k /= 28;
+	
+	//Innovation Vector (Residual between Actual and Expected Measurement
+	ublas::vector<double> Vk = z - Zbar_k;
+	
+	//Recycle, Reuse, Reduce: Observation subset with mean subtracted.
+	for(unsigned i = 0; i < Z_i.size2(); ++i){
+		column(Z_i, i) = column(Z_i, i) - Zbar_k;
+	}
+	
+	
+	//Innovation Covariance
+	ublas::matrix<double> Pvv = calculateCovEquation(Z_i, Z_i);
+	Pvv += R;
+	//cout << Pvv << endl;
+	//Cross Correlation
+	ublas::matrix<double> Pxz = calculateCovEquation(W_i, Z_i);
+	//cout << Pxz << endl;
+	
+	ublas::matrix<double> PvvInv(Pvv.size1(), Pvv.size2());
+	if(InvertMatrix(Pvv, PvvInv)){ //via LU Factorization
+		//cout << PvvInv << endl;
+		//Kalman Gain
+		ublas::matrix<double> K_k = prod(Pxz, PvvInv);
+		cout << K_k << endl;
+		
+		//Measurement Updated State Estimate
+		ublas::vector<double> aposterioriStateEst = aprioriStateEst + prod(K_k, Vk);
+		cout << aposterioriStateEst << endl;
+		dataVec tempVec;
+		for(unsigned i = 0; i < aposterioriStateEst.size(); ++i){
+		tempVec.push_back(aposterioriStateEst(i));
+		}
+		stateVector.push_back(tempVec);
+		
+		ublas::matrix<double> holdProd = prod(Pvv, trans(K_k)); 
+		P = Pbar_k - prod(K_k, holdProd);
+		cout << P << endl;
+	}else {cout << "Pvv Approaching Singularity" << endl;}
+	
+	
 	
 }
 
@@ -188,7 +220,8 @@ double atanFM(double y, double x){
 //Covariance Matrix calculated as weighted/averaged outer product of input points/vectors.
 ublas::matrix<double> calculateCovEquation(ublas::matrix<double> A, ublas::matrix<double> B){
 	
-	ublas::matrix<double> covMat(14, 14);
+	//ublas::matrix<double> covMat(14, 14);
+	ublas::matrix<double> covMat(A.size1(), B.size1());
 	for(unsigned i = 0; i < covMat.size1(); ++i){
 		for(unsigned j = 0; j < covMat.size2(); ++j){ 
 			covMat(i, j) = 0.0;
@@ -202,14 +235,6 @@ ublas::matrix<double> calculateCovEquation(ublas::matrix<double> A, ublas::matri
 	return covMat;
 }
 
-
-/*
-ublas::vector<double> gEqn(ublas::vector<double> sigmaPoint, ublas::vector<double> errVn, ublas::vector<double> Vn){ 
-	cout << "gEqn" << endl;
-	
-	
-}
-*/
 
 
 
