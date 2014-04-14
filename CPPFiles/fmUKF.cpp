@@ -1,6 +1,6 @@
 /*
  * Unscented Kalman Filter
- * State: Position, Velocity, Orientation, Accelerometer Bias
+ * State: Position, Velocity, Orientation, Accelerometer Bias, Roll/Pitch Bias
  * Fredy Monterroza 
  * 
 */
@@ -37,11 +37,22 @@ extern ublas::matrix<double> Q;
 extern ublas::matrix<double> R;
 
 
-
+/*
+ * Using the Unscented Kalman Filter, compute a state estimate from the gEqn() quadrotor dynamics
+ * and update this apriori state estimate whenever a measurement is available from the nPointPose
+ * algorithm. 
+ * @param stateVector Container to hold the computed state estimates.
+ * @param x Previous State Estimate
+ * @param P Previous State Covariance
+ * @param deltaT Sample Rate, time at which data collected on quadrotor
+ * @param z Measurement provided by N-Point Pose Algorithm 
+ * @param errVn Disturbance used in tracking accelerometer bias
+ * @param Vn Control input from IMU. 
+ */
 void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::matrix<double>& P, double deltaT, ublas::vector<double> z, ublas::vector<double> errVn, ublas::vector<double> Vn)
 
 {
-	cout << "fmUKF" << endl;
+	//cout << "fmUKF" << endl;
 	
 	ublas::matrix<double> sumPQ = P + Q;
 	ublas::matrix<double> L(14, 14);
@@ -63,7 +74,26 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		//cout << W_i << endl;
 		
 		
-	} else { cout << "Require Square Symmertric Positive Definite Input" << endl; }
+	} else { 
+		cout << "Require Square Symmertric Positive Definite Input" << endl;
+		//Reset L to identity. 
+		for(ublas::matrix<double>::iterator1 iter1L = L.begin1(); iter1L != L.end1(); ++iter1L){ //Row by row
+			for(ublas::matrix<double>::iterator2 iter2L = iter1L.begin(); iter2L != iter1L.end(); ++iter2L){ //Go from col to the next col for fixed row
+				if (iter1L.index1() == iter2L.index2()){
+					*iter2L = 1;
+				} else {
+					*iter2L = 0;
+				}
+			}
+	    }
+		subrange(W_i, 0, 14, 0, 14) = sqrt(14.0) * L;
+		subrange(W_i, 0, 14, 14, 28) = -sqrt(14.0) * L;
+				
+		//Add the previous mean Xest to complete Sigma Points
+		for(unsigned i = 0; i < W_i.size2(); ++i){ //bsxfun(@plus)
+			column(W_i, i) = column(W_i, i) + x;
+		}
+	}
 	
 	//Propogate the Sigma Points
 	ublas::vector<double> propogatedSigma(14);
@@ -93,7 +123,7 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		tempVec.push_back(aprioriStateEst(i));
 		}
 		stateVector.push_back(tempVec);
-		cout << "No Measurement Update Available to Correct Apriori Estimate" << endl;
+		//cout << "No Measurement Update Available to Correct Apriori Estimate" << endl;
 		return;
 	}
 	
@@ -131,11 +161,11 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		//cout << PvvInv << endl;
 		//Kalman Gain
 		ublas::matrix<double> K_k = prod(Pxz, PvvInv);
-		cout << K_k << endl;
+		//cout << K_k << endl;
 		
 		//Measurement Updated State Estimate
 		ublas::vector<double> aposterioriStateEst = aprioriStateEst + prod(K_k, Vk);
-		cout << aposterioriStateEst << endl;
+		//cout << aposterioriStateEst << endl;
 		dataVec tempVec;
 		for(unsigned i = 0; i < aposterioriStateEst.size(); ++i){
 		tempVec.push_back(aposterioriStateEst(i));
@@ -144,14 +174,21 @@ void fmUKF (std::vector<dataVec>& stateVector, ublas::vector<double> x, ublas::m
 		
 		ublas::matrix<double> holdProd = prod(Pvv, trans(K_k)); 
 		P = Pbar_k - prod(K_k, holdProd);
-		cout << P << endl;
+		//cout << P << endl;
 	}else {cout << "Pvv Approaching Singularity" << endl;}
 	
 	
 	
 }
 
-//Non-Linear Dynamics
+/*
+ * Quadrotor (Non-Linear) Dynamics
+ * @param sigmaPoint Sigma Point captured by Cholesky Decomposition and Previous State Estimate
+ * @param errVn Disturbance used to track accelerometer bias/
+ * @param Vn Control Input from IMU
+ * @param deltaT Difference in time between sample collection on quadrotor.
+ * @return propogated sigma point.
+ */
 ublas::vector<double> gEqn(ublas::vector<double> sigmaPoint, ublas::vector<double> errVn, ublas::vector<double> Vn, double deltaT){	
 	//cout << "gEqn" << endl;
 	ublas::vector<double> propState(14);
@@ -194,7 +231,13 @@ ublas::vector<double> gEqn(ublas::vector<double> sigmaPoint, ublas::vector<doubl
 	
 }
 
-//Return Rotation Matrix along ZXY
+/*
+ * Return Rotation Matrix along ZXY
+ * @param phi Roll angle in radians
+ * @param theta Pitch angle in radians
+ * @param psi Yaw angle in radians
+ * @param Orientation of Quadrotor in world frame
+ */
 ublas::matrix<double> RPYtoRotMat(double phi, double theta, double psi){
 	ublas::matrix<double> rotMat(3,3);
 	rotMat(0,0) = cos(psi)*cos(theta) - sin(phi)*sin(psi)*sin(theta);
@@ -212,12 +255,18 @@ ublas::matrix<double> RPYtoRotMat(double phi, double theta, double psi){
 	return rotMat;
 }
 
-//atan used with Matlab Symbolic Explressions, replicated here for comparison.
+/*
+ * atan used with Matlab Symbolic Explressions, replicated here for comparison.
+ * @return Inverse Tangent in radians.
+ */
 double atanFM(double y, double x){
 	return  2*atan(y / ( sqrt((x*x)+(y*y)) + x ));	
 }
 
-//Covariance Matrix calculated as weighted/averaged outer product of input points/vectors.
+/*
+ * Covariance Matrix calculated as weighted/averaged outer product of input points/vectors.
+ * @return Covariance Matrix obtained between A, B vectors.
+ */
 ublas::matrix<double> calculateCovEquation(ublas::matrix<double> A, ublas::matrix<double> B){
 	
 	//ublas::matrix<double> covMat(14, 14);
