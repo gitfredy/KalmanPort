@@ -1,3 +1,9 @@
+/* 
+   This file is to read in the quadData.mat cell structure containing quadLog, quadTime, and sensorLog and parse 
+   it into corresponding data structures necessary for implementation of the EKF/UKF.
+   Fredy Monterroza
+*/
+
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -11,10 +17,7 @@
 #include <map>
 #include <list>
 
-/* This file is to read in the quadData.mat cell structure containing quadLog, quadTime, and sensorLog and parse 
-   it into corresponding data structures necessary for implementation of the EKF/UKF.
-   Fredy Monterroza
-*/
+
 
 //using namespace std;
 using std::cout;
@@ -95,20 +98,15 @@ void inputData(){
  string inQuadTime;
  double inQuadTimeNum;
  ifstream inFileQuadTime ("../Data/quadTimeLog.txt");
- if(inFileTime.is_open()){
+ if(inFileQuadTime.is_open()){
   while(getline(inFileQuadTime, inQuadTime)){
    inQuadTimeNum = stod(inQuadTime);
    quadTimeLog.push_back(inQuadTimeNum);
   }
-  inFileTime.close();
+  inFileQuadTime.close();
  }else {
  cout << "Error Opening File" << endl;
  }
- /*
- for (list<double>::iterator vtIter = viconTime.begin(); vtIter != viconTime.end(); ++vtIter){
-  cout << setprecision(17) << *vtIter << endl;
- }
- */
  
  
  //-----Read poseNPPPos (Measurement Update, Position Output From nPointPose Algorithm)-----
