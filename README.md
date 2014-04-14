@@ -7,5 +7,29 @@
 ####Implementation uses Boost 1.49 and C++11/STL
 
 
-*Discription/Info Will Go here, ongoing work*
-roll/pitch bias maintained at 0 in this exercise.
+The Kalman Filter is an optimal estimator. If
+the noise of the system and observations can be modeled as
+Gaussian, then the Kalman Filter minimizes the mean square
+error of the estimate. In addition, the filter is recursive and can
+thus provide state estimates as new data becomes available. If
+you have a good estimate, then combining the filter with a
+pre-process step of gain learning can achieve a reliable system. 
+The purpose of the project was to fly a quadrotor using
+either the Extended Kalman Filter or the Unscented Kalman
+Filter with an IMU and single camera serving as input to
+the system. Once a good state estimator was developed, this
+would be used in conjunction with a PD controller which
+would use the position and velocity estimates to calculate the
+required thrusts and moments to reach the desired position.
+The nanoplus quadrotor has an onboard attitude controller
+that runs at a higher frequency than the position and velocity
+controller. This means the orientation estimate would only
+be kept as an exercise of the kalman filter since the attitude
+controller requires a larger rate of input than is available
+(The IMU and Camera data were synchronized at 33Hz).
+Having obtained a good controller and good state estimate,
+the quadrotor could track a desired trajectory. If you imagine
+a situation where the quadrotor would be required to follow a
+desired trajectory as accurately as possible (say, surveillance
+duty) then it would be necessary to learn an optimal set of
+gains. Here, only the Kalman Filters are provided.
