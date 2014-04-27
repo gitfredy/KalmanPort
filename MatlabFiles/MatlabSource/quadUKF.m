@@ -37,23 +37,26 @@ end
 X = bsxfun(@plus, W_i, x); %Sigma Points are a sampling around the mean.
 X_i = zeros(14, 28); %14 x 28 dimensional vectors of sigma points
 
+
+%disp(X);
+global herp;
 for k = 1:28
-   
     X_i(:,k) = gEqn(Vn(1), Vn(2), Vn(3), Vn(4), Vn(5), Vn(6), X(1,k), X(10,k), X(11,k), X(12,k), X(13,k), X(14,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k), X(7,k), X(8,k), X(9,k), ...
     deltaT, errVn(1), errVn(2), errVn(3), errVn(4), errVn(5), errVn(6), errVn(7), errVn(8), errVn(9));
-    
+    %herp = [herp, X_i(:,k)];
 end
 
 %Subtract Mean from Propogated Sigma Points and Obtain A-Priori Estimate Xhatbar_k = mean{Yi}
 Y_i = X_i;
 xhatbar_k = mean(Y_i, 2);
-
+%global herp;
+%herp = [herp, xhatbar_k];
 
 %Compute {W_i_prime} set by subtracting mean from step 4 from {Y_i}. To be used for calculating a-priori state estimate covariance.
 W_i_prime = bsxfun(@minus, Y_i, xhatbar_k);
 
 %Step 6: Compute apriori state estimate covariance (Pbar_k) from W_i_prime.  
-%Average the 24 matrices:
+%Average the 28 matrices:
 Pbar_k = calculateCovEquation(W_i_prime, W_i_prime);
     
 %End Process Update (Dynamics Update, Prediction): If there is no
@@ -94,9 +97,13 @@ Pxz = calculateCovEquation(W_i_prime, Z_imZbar_k);
 
 
 %Step 11: Compute Kalman Gain K_k = Pxz * Pvv^-1
+%disp(Pxz);
+%disp(inv(Pvv));
 K_k = Pxz * inv(Pvv); %ignore matlab's advice 'cause this is matrix multiplicaton not solving a Ax=b
-
-
+herp = [herp, Vk];
+%disp(inv(Pvv));
+%disp(K_k);
+%disp(K_k*Vk);
 Xhat_k = xhatbar_k + K_k*Vk;
 Pk = Pbar_k - K_k*Pvv*K_k'; %Estimate Error Covariance, 6x6
 %End Measurement Update (Correction Step)

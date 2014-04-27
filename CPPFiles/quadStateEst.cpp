@@ -8,17 +8,9 @@
 */
 
 #include <iostream>
-//#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <iomanip>
-//#include <sstream>
-
-//#include <algorithm>
-//#include <vector>
-//#include <map>
-//#include <list>
 
 #include <math.h>
 
@@ -68,6 +60,7 @@ ublas::vector<double> Vn(6);
 ublas::matrix<double> Q(14,14);
 ublas::matrix<double> R(6,6);
 
+int kfIteration = 1;
 
 int main(){
 	//For use with random walk model of accelerometer bias.
@@ -170,10 +163,10 @@ int main(){
 	/*
 	 * Unscented Kalman Filter Loop 
 	 */ 
-	int kfIteration = 1; //0th Element in Data Vectors contains the first inputs/pose estimates
 	
 	while(accIter != sensorLogAccImu.end()){
-		cout << kfIteration << endl;
+		if(kfIteration > 757) {break;}
+		
 		accInput = accIter->begin();
 		gyroInput = omegaIter->begin();
 		for(unsigned i = 0; i < (Vn.size()/2); ++i){
@@ -190,11 +183,11 @@ int main(){
 			Z(i) = *nppPos++;
 			Z(i+3) = *nppOrient++;
 		}
-		//cout << Z << endl;
 		
+		cout << kfIteration << endl;
+		cout << Xest << endl;
 		fmUKF(stateVector, Xest, P, deltaT, Z, errVn, Vn);
-		//cout << P << endl;
-	
+
 		//Update prevTime
 		prevT = *qtIter;
 		

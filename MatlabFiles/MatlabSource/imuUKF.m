@@ -282,9 +282,10 @@ h = figure;
 figure(h);
 hold all;
 
-
+global herp;
+herp = [];
 for i = 523:(numSamples-230) %Vicon Samples and Sensor Samples are same #, but have to check if actually have a sensor packet...
-    
+    disp(i);
     if (i==1284) %Stop UKF at 'Blind' Stage, covariance diverges rapidly.
            break;
            
@@ -316,8 +317,8 @@ for i = 523:(numSamples-230) %Vicon Samples and Sensor Samples are same #, but h
      %IMU Error in Accelerometer/Gyro
      errVn(1:6) = 0; %0 Mean Noise for Process Update (Prediction)
      errVn(7:9) = sqrt((diag([varAx, varAy, varAz]))) * randn(3,1); %Gaussian Random Walk Model of accelerometer time varying bias
-
      
+     %herp = [herp, deltaT];
   % UKF Correction: Only When have an image TAG to do nPointPose
   if ~isempty(sensorLog{i}.id)
       
