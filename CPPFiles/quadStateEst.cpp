@@ -165,7 +165,6 @@ int main(){
 	 */ 
 	
 	while(accIter != sensorLogAccImu.end()){
-		if(kfIteration > 757) {break;}
 		
 		accInput = accIter->begin();
 		gyroInput = omegaIter->begin();
