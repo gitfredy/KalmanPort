@@ -61,9 +61,9 @@ gains. Here, only the Kalman Filters are provided.
 [ROS Variant] (/ukfROS)
 
 Open a terminal and run 'roscore'. In a second terminal, open rviz with
-'rosrrun rviz rviz &' and change the 'Fixed Frame' to '/quad_World' 
+'rosrun rviz rviz &' and change the 'Fixed Frame' to '/quad_World' 
 under 'Global Options'. Then add a marker display type, which should 
-be subcribed to the 'visualization_marker' topic. Finally, in a third
+be subscribed to the 'visualization_marker' topic. Finally, in a third
 terminal, execute ./quadStateEstROS and you should see the path of the
 quadrotor in Rviz.
 
