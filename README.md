@@ -67,6 +67,10 @@ be subcribed to the 'visualization_marker' topic. Finally, in a third
 terminal, execute ./quadStateEstROS and you should see the path of the
 quadrotor in Rviz.
 
-
+The full command to compile the source is provided here for reference:
+g++ -Wall -c quadStateEstROS.cpp -o quadStateEstROS -std=c++11 
+-I/opt/ros/hydro/include 
+-L/opt/ros/hydro/lib /opt/ros/hydro/lib/libroscpp_serialization.so 
+-Wl,-rpath,/opt/ros/hydro/lib -lroscpp -lrosconsole -lrostime
 
 
