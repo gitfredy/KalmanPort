@@ -4,7 +4,7 @@
 ####State Vector for both Kalman Filter implementations is 14 Dimensional: 
 ####[position, velocity, orientation, imu accelerometer bias, roll/pitch bias]
 
-####Implementation uses Boost 1.49 and C++11/STL
+####Implementation uses Boost 1.49, C++11/STL, and ROS Hyrdo
 
 ######Information
 The Kalman Filter is an optimal estimator. If
@@ -56,6 +56,16 @@ gains. Here, only the Kalman Filters are provided.
 [Boost Cholesky Decomposition] (/CPPFiles/cholesky.cpp)
 
 [Data Collected Wirelessly From Quadrotor] (/Data)
+
+######Using RViz
+[ROS Variant] (/ukfROS)
+
+Open a terminal and run 'roscore'. In a second terminal, open rviz with
+'rosrrun rviz rviz &' and change the 'Fixed Frame' to '/quad_World' 
+under 'Global Options'. Then add a marker display type, which should 
+be subcribed to the 'visualization_marker' topic. Finally, in a third
+terminal, execute ./quadStateEstROS and you should see the path of the
+quadrotor in Rviz.
 
 
 
